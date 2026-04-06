@@ -1,12 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { LogOut, User, Shield, CheckCircle, Lock } from 'lucide-react';
+import api from '../api/axios';
+import { LogOut, User, Shield, CheckCircle, Lock, Package } from 'lucide-react';
 
 const Profile = () => {
     const { user, logout, toggle2FA } = useAuth();
     const [loading2FA, setLoading2FA] = useState(false);
+    const [ordersLoading, setOrdersLoading] = useState(true);
+    const [myOrders, setMyOrders] = useState([]);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            if (user) {
+                try {
+                    const { data } = await api.get('/orders/myorders');
+                    setMyOrders(data);
+                } catch (error) {
+                    console.error('Failed to fetch orders:', error);
+                } finally {
+                    setOrdersLoading(false);
+                }
+            }
+        };
+        fetchOrders();
+    }, [user]);
 
     const handleLogout = () => {
         logout();
@@ -35,8 +54,8 @@ const Profile = () => {
     }
 
     return (
-        <div className="container section">
-            <div className="card" style={{ maxWidth: '600px', margin: '0 auto', padding: '3rem 2rem' }}>
+        <div className="container section" style={{ display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+            <div className="card" style={{ maxWidth: '600px', margin: '0 auto', padding: '3rem 2rem', width: '100%' }}>
                 <header className="flex flex-col items-center gap-4 border-b" style={{ paddingBottom: '2.5rem', marginBottom: '2.5rem' }}>
                     <div style={{ padding: '1.5rem', backgroundColor: 'var(--surface)', borderRadius: '50%' }}>
                         <User size={64} className="text-primary" />
@@ -93,6 +112,61 @@ const Profile = () => {
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* My Orders Section */}
+            <div className="card" style={{ padding: '2.5rem' }}>
+                <header style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '2rem' }}>
+                    <Package size={28} className="text-primary" />
+                    <h2 className="font-bold" style={{ fontSize: '1.75rem', letterSpacing: '-0.025em' }}>Order History</h2>
+                </header>
+
+                {ordersLoading ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--muted)', fontWeight: 500 }}>
+                        Securely loading your purchase history...
+                    </div>
+                ) : myOrders.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '4rem 0', color: 'var(--muted)', border: '1px dashed var(--border)', borderRadius: '8px', fontWeight: 500 }}>
+                        You haven't placed any orders yet. 
+                    </div>
+                ) : (
+                    <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                            <thead>
+                                <tr style={{ background: 'var(--surface)', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--muted)' }}>
+                                    <th style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>Order ID</th>
+                                    <th style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>Date</th>
+                                    <th style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>Total</th>
+                                    <th style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {myOrders.map(order => (
+                                    <tr key={order._id}>
+                                        <td style={{ padding: '1.25rem', fontSize: '0.875rem', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                                            {order._id.slice(-8)}
+                                        </td>
+                                        <td style={{ padding: '1.25rem', fontSize: '0.875rem', borderBottom: '1px solid var(--border)', fontWeight: 500 }}>
+                                            {new Date(order.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })}
+                                        </td>
+                                        <td style={{ padding: '1.25rem', fontSize: '0.875rem', fontWeight: 700, borderBottom: '1px solid var(--border)' }}>
+                                            ₹{order.totalPrice.toFixed(2)}
+                                        </td>
+                                        <td style={{ padding: '1.25rem', borderBottom: '1px solid var(--border)' }}>
+                                            {order.isDelivered ? (
+                                                <span className="badge" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>Delivered</span>
+                                            ) : order.isPaid ? (
+                                                <span className="badge" style={{ backgroundColor: 'rgba(37, 99, 235, 0.1)', color: 'var(--accent)' }}>Processing</span>
+                                            ) : (
+                                                <span className="badge" style={{ backgroundColor: 'var(--surface)', color: 'var(--muted)' }}>Unpaid</span>
+                                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );
