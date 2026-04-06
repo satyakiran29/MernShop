@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import api from '../api/axios';
 import { CreditCard, Truck, CheckCircle, ArrowRight, Loader } from 'lucide-react';
 import { loadStripe } from '@stripe/stripe-js';
@@ -8,7 +9,7 @@ import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder');
 
-const CheckoutForm = ({ shippingData, onSuccess, onBack }) => {
+const CheckoutForm = ({ shippingData, user, onSuccess, onBack }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [loading, setLoading] = useState(false);
@@ -26,6 +27,8 @@ const CheckoutForm = ({ shippingData, onSuccess, onBack }) => {
             confirmParams: {
                 payment_method_data: {
                     billing_details: {
+                        name: user?.name || 'Guest User',
+                        email: user?.email || 'guest@example.com',
                         address: {
                             city: shippingData.city,
                             country: 'IN', // Assuming India for UPI compat
@@ -71,6 +74,7 @@ const CheckoutForm = ({ shippingData, onSuccess, onBack }) => {
 };
 
 const Checkout = () => {
+    const { user } = useAuth();
     const { cartItems, totalPrice, itemsPrice, shippingPrice, taxPrice, clearCart } = useCart();
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1: Shipping, 2: Payment, 3: Success
@@ -228,6 +232,7 @@ const Checkout = () => {
                            {clientSecret && (
                                <Elements options={{ clientSecret, appearance: { theme: 'stripe' } }} stripe={stripePromise}>
                                    <CheckoutForm 
+                                       user={user}
                                        shippingData={shippingData} 
                                        onSuccess={handlePaymentSuccess} 
                                        onBack={() => setStep(1)} 
