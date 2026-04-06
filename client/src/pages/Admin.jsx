@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import Loader from '../components/Loader';
-import { Package, ShoppingBag, Plus, Trash2, Edit2, CheckCircle, Clock } from 'lucide-react';
+import { Package, ShoppingBag, Plus, Trash2, Edit2, CheckCircle, Clock, IndianRupee, Truck, TrendingUp } from 'lucide-react';
 
 const Admin = () => {
     const [products, setProducts] = useState([]);
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('products');
+    const [activeTab, setActiveTab] = useState('overview');
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editId, setEditId] = useState(null);
@@ -91,6 +91,9 @@ const Admin = () => {
 
     if (loading) return <Loader />;
 
+    const totalIncome = orders.filter(o => o.isPaid).reduce((acc, current) => acc + current.totalPrice, 0);
+    const pendingShipments = orders.filter(o => o.isPaid && !o.isDelivered).length;
+
     return (
         <div className="container py-20 flex flex-col gap-12">
             <header className="flex flex-col gap-6">
@@ -101,7 +104,13 @@ const Admin = () => {
                     </div>
                 </div>
 
-                <div className="flex gap-8 border-b text-sm font-medium">
+                <div className="flex gap-8 border-b text-sm font-medium overflow-x-auto whitespace-nowrap">
+                    <button 
+                        onClick={() => setActiveTab('overview')}
+                        className={`pb-4 border-b-2 transition-all ${activeTab === 'overview' ? 'border-black text-black' : 'border-transparent text-muted hover:text-black'}`}
+                    >
+                        Overview Analytics
+                    </button>
                     <button 
                         onClick={() => setActiveTab('products')}
                         className={`pb-4 border-b-2 transition-all ${activeTab === 'products' ? 'border-black text-black' : 'border-transparent text-muted hover:text-black'}`}
@@ -118,7 +127,45 @@ const Admin = () => {
             </header>
 
             <main>
-                {activeTab === 'products' ? (
+                {activeTab === 'overview' && (
+                    <div className="flex flex-col gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="bg-surface p-6 rounded-lg border flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm font-medium text-muted">Total Revenue</span>
+                                    <div className="p-2 bg-success/10 rounded-md text-success"><IndianRupee size={18} /></div>
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight shrink-0 overflow-hidden text-ellipsis">₹{totalIncome.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+                            </div>
+                            
+                            <div className="bg-surface p-6 rounded-lg border flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm font-medium text-muted">Pending Shipments</span>
+                                    <div className="p-2 bg-orange-500/10 rounded-md text-orange-600"><Truck size={18} /></div>
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight">{pendingShipments}</h3>
+                            </div>
+
+                            <div className="bg-surface p-6 rounded-lg border flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm font-medium text-muted">Lifetime Orders</span>
+                                    <div className="p-2 bg-black/5 rounded-md"><ShoppingBag size={18} /></div>
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight">{orders.length}</h3>
+                            </div>
+
+                            <div className="bg-surface p-6 rounded-lg border flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
+                                    <span className="text-sm font-medium text-muted">Active Inventory</span>
+                                    <div className="p-2 bg-black/5 rounded-md"><Package size={18} /></div>
+                                </div>
+                                <h3 className="text-3xl font-bold tracking-tight">{products.length}</h3>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
+                {activeTab === 'products' && (
                     <div className="flex flex-col gap-8">
                         <div className="flex justify-between items-center bg-surface p-4 rounded-lg border">
                              <span className="text-sm font-medium">Product Catalog</span>
@@ -159,7 +206,9 @@ const Admin = () => {
                             </table>
                         </div>
                     </div>
-                ) : (
+                )}
+                
+                {activeTab === 'orders' && (
                     <div className="flex flex-col gap-8">
                         <div className="bg-surface p-4 rounded-lg border">
                              <span className="text-sm font-medium">Customer Orders</span>
@@ -189,7 +238,13 @@ const Admin = () => {
                                                 {order.isPaid ? <span className="text-success text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-success/10 rounded-sm">Paid</span> : <span className="text-error text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-error/10 rounded-sm">No</span>}
                                             </td>
                                             <td className="p-4">
-                                                {order.isDelivered ? <span className="text-success text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-success/10 rounded-sm">Yes</span> : <span className="text-muted text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-surface rounded-sm">No</span>}
+                                                {order.isDelivered ? (
+                                                    <span className="text-success text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-success/10 rounded-sm">Shipped</span>
+                                                ) : order.isPaid ? (
+                                                    <span className="text-orange-600 text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-orange-500/10 rounded-sm whitespace-nowrap">Pending Dispatch</span>
+                                                ) : (
+                                                    <span className="text-muted text-[10px] uppercase font-bold tracking-wider px-2 py-1 bg-surface rounded-sm">No</span>
+                                                )}
                                             </td>
                                             <td className="p-4">
                                                 {!order.isDelivered && order.isPaid && (
