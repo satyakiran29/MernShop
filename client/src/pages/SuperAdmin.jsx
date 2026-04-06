@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api/axios';
 import Loader from '../components/Loader';
-import { Users, Shield, ShieldAlert, UserX, UserCheck, Trash2, Mail, Calendar } from 'lucide-react';
+import { Users, ShieldAlert, UserX, UserCheck, Trash2, Mail } from 'lucide-react';
 
 const SuperAdmin = () => {
     const [users, setUsers] = useState([]);
@@ -53,52 +53,54 @@ const SuperAdmin = () => {
     if (loading) return <Loader />;
 
     return (
-        <div className="container py-20 flex flex-col gap-12">
-            <header className="flex flex-col gap-4">
-                <div className="flex items-center gap-3">
-                    <ShieldAlert size={32} className="text-black" />
-                    <h1 className="text-4xl font-bold tracking-tight">Super Admin Panel</h1>
+        <div className="container" style={{ padding: '5rem 2rem', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+            <header style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <ShieldAlert size={36} style={{ color: 'var(--fg)' }} />
+                    <h1 style={{ fontSize: '2.5rem', fontWeight: 700, letterSpacing: '-0.025em' }}>Super Admin Panel</h1>
                 </div>
-                <p className="text-muted text-sm max-w-2xl">Full system control. Manage user roles, permissions, and account statuses. You can promote users to admin or ban accounts from the platform.</p>
+                <p style={{ color: 'var(--muted)', fontSize: '0.875rem', maxWidth: '42rem' }}>
+                    Full system control. Manage user roles, permissions, and account statuses. You can promote users to admin or ban accounts from the platform.
+                </p>
             </header>
 
-            <main className="flex flex-col gap-8">
-                <div className="bg-surface p-4 rounded-lg border flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                        <Users size={18} />
-                        <span className="text-sm font-semibold tracking-tight">Active Accounts ({users.length})</span>
+            <main style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div style={{ backgroundColor: 'var(--surface)', padding: '1rem 1.5rem', borderRadius: '8px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <Users size={20} />
+                        <span style={{ fontSize: '0.875rem', fontWeight: 600 }}>Active Accounts ({users.length})</span>
                      </div>
                 </div>
 
-                <div className="overflow-x-auto border rounded-lg shadow-sm">
-                    <table className="w-full text-left border-collapse">
+                <div style={{ overflowX: 'auto', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                         <thead>
-                            <tr className="bg-surface text-[10px] uppercase font-bold tracking-widest border-b">
-                                <th className="p-6">User</th>
-                                <th className="p-6 text-center">Role</th>
-                                <th className="p-6 text-center">Status</th>
-                                <th className="p-6 text-right">Actions</th>
+                            <tr style={{ backgroundColor: 'var(--surface)', fontSize: '0.625rem', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.1em', color: 'var(--muted)', borderBottom: '1px solid var(--border)' }}>
+                                <th style={{ padding: '1.5rem' }}>User</th>
+                                <th style={{ padding: '1.5rem', textAlign: 'center' }}>Role</th>
+                                <th style={{ padding: '1.5rem', textAlign: 'center' }}>Status</th>
+                                <th style={{ padding: '1.5rem', textAlign: 'right' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {users.map(user => (
-                                <tr key={user._id} className="border-b last:border-none hover:bg-surface/30 transition-colors">
-                                    <td className="p-6">
-                                        <div className="flex flex-col gap-0.5">
-                                            <span className="text-sm font-bold">{user.name}</span>
-                                            <div className="flex items-center gap-2 text-xs text-muted">
-                                                <Mail size={12} />
+                                <tr key={user._id} style={{ borderBottom: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '1.5rem' }}>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                            <span style={{ fontSize: '0.875rem', fontWeight: 700 }}>{user.name}</span>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem', color: 'var(--muted)' }}>
+                                                <Mail size={14} />
                                                 <span>{user.email}</span>
                                             </div>
-                                            <span className="text-[10px] font-mono mt-1 opacity-50">{user._id}</span>
+                                            <span style={{ fontSize: '0.625rem', fontFamily: 'monospace', color: 'var(--muted)', marginTop: '0.25rem' }}>{user._id}</span>
                                         </div>
                                     </td>
-                                    <td className="p-6 text-center">
-                                         <div className="flex items-center justify-center gap-2">
+                                    <td style={{ padding: '1.5rem', textAlign: 'center' }}>
+                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                             <select 
                                                 value={user.role}
                                                 onChange={(e) => handleRoleChange(user._id, e.target.value)}
-                                                className="text-xs font-bold uppercase tracking-wider py-1.5 px-3 bg-surface border-none w-fit cursor-pointer outline-none focus:ring-1 focus:ring-black"
+                                                style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', padding: '0.375rem 0.75rem', backgroundColor: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', outline: 'none' }}
                                             >
                                                 <option value="user">USER</option>
                                                 <option value="admin">ADMIN</option>
@@ -106,34 +108,34 @@ const SuperAdmin = () => {
                                             </select>
                                          </div>
                                     </td>
-                                    <td className="p-6 text-center">
+                                    <td style={{ padding: '1.5rem', textAlign: 'center' }}>
                                          {user.isActive ? (
-                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-success/10 text-success text-[10px] font-bold uppercase tracking-wider rounded-full">
-                                                  <UserCheck size={12} /> Active
+                                             <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)' }}>
+                                                  <UserCheck size={14} /> Active
                                              </span>
                                          ) : (
-                                             <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-error/10 text-error text-[10px] font-bold uppercase tracking-wider rounded-full">
-                                                  <UserX size={12} /> Banned
+                                             <span className="badge" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.375rem', backgroundColor: 'rgba(225, 29, 72, 0.1)', color: 'var(--error)' }}>
+                                                  <UserX size={14} /> Banned
                                              </span>
                                          )}
                                     </td>
-                                    <td className="p-6 text-right">
-                                        <div className="flex justify-end gap-6 text-muted">
+                                    <td style={{ padding: '1.5rem', textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1.5rem', color: 'var(--muted)' }}>
                                             {user.role !== 'super_admin' && (
                                                 <>
                                                     <button 
                                                         onClick={() => handleStatusChange(user._id, !user.isActive)}
-                                                        className={`hover:text-black transition-colors ${!user.isActive ? 'text-success hover:text-success' : 'hover:text-error'}`}
                                                         title={user.isActive ? "Ban User" : "Unban User"}
+                                                        style={{ color: user.isActive ? 'var(--muted)' : 'var(--success)', cursor: 'pointer' }}
                                                     >
-                                                       {user.isActive ? <UserX size={18} /> : <UserCheck size={18} />}
+                                                       {user.isActive ? <UserX size={20} /> : <UserCheck size={20} />}
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeleteUser(user._id)}
-                                                        className="hover:text-error transition-colors"
                                                         title="Delete Account"
+                                                        style={{ color: 'var(--muted)', cursor: 'pointer' }}
                                                     >
-                                                        <Trash2 size={18} />
+                                                        <Trash2 size={20} />
                                                     </button>
                                                 </>
                                             )}
