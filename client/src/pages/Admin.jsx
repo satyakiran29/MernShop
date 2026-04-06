@@ -9,6 +9,12 @@ const Admin = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('products');
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editId, setEditId] = useState(null);
+    const [editingProduct, setEditingProduct] = useState({
+        name: '', price: 0, image: '', brand: '', category: '', countInStock: 0, description: ''
+    });
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -26,6 +32,42 @@ const Admin = () => {
         };
         fetchData();
     }, []);
+
+    const handleCreateProduct = async () => {
+        try {
+            const { data } = await api.post('/products', {});
+            setProducts([data, ...products]);
+            handleEditClick(data);
+        } catch (error) {
+            alert('Error creating product');
+        }
+    };
+
+    const handleEditClick = (product) => {
+        setEditId(product._id);
+        setEditingProduct({
+            name: product.name || '',
+            price: product.price || 0,
+            image: product.image || '',
+            brand: product.brand || '',
+            category: product.category || '',
+            countInStock: product.countInStock || 0,
+            description: product.description || ''
+        });
+        setIsModalOpen(true);
+    };
+
+    const handleUpdateProduct = async (e) => {
+        e.preventDefault();
+        try {
+            const { data } = await api.put(`/products/${editId}`, editingProduct);
+            setProducts(products.map(p => p._id === data._id ? data : p));
+            setIsModalOpen(false);
+            setEditId(null);
+        } catch (error) {
+            alert('Error updating product');
+        }
+    };
 
     const handleDeleteProduct = async (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
@@ -80,7 +122,7 @@ const Admin = () => {
                     <div className="flex flex-col gap-8">
                         <div className="flex justify-between items-center bg-surface p-4 rounded-lg border">
                              <span className="text-sm font-medium">Product Catalog</span>
-                             <button className="btn btn-primary gap-2 text-xs py-2 px-4 uppercase font-bold tracking-widest">
+                             <button onClick={handleCreateProduct} className="btn btn-primary gap-2 text-xs py-2 px-4 uppercase font-bold tracking-widest">
                                  <Plus size={16} /> Add Product
                              </button>
                         </div>
@@ -107,7 +149,7 @@ const Admin = () => {
                                             <td className="p-4 text-sm text-muted">{product.category}</td>
                                             <td className="p-4">
                                                 <div className="flex gap-4">
-                                                    <button className="text-muted hover:text-black"><Edit2 size={16} /></button>
+                                                    <button onClick={() => handleEditClick(product)} className="text-muted hover:text-black"><Edit2 size={16} /></button>
                                                     <button onClick={() => handleDeleteProduct(product._id)} className="text-muted hover:text-error"><Trash2 size={16} /></button>
                                                 </div>
                                             </td>
@@ -162,6 +204,54 @@ const Admin = () => {
                     </div>
                 )}
             </main>
+            
+            {isModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '1rem' }}>
+                    <div style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '8px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #eee', paddingBottom: '1rem' }}>
+                            <h2 style={{ fontSize: '1.25rem', fontWeight: 'bold' }}>{editId ? 'Edit Product' : 'Add Product'}</h2>
+                        </div>
+                        <form onSubmit={handleUpdateProduct} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                            <div className="form-group-minimal">
+                                <label>Name</label>
+                                <input type="text" required value={editingProduct.name} onChange={e => setEditingProduct({...editingProduct, name: e.target.value})} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group-minimal">
+                                    <label>Price (₹)</label>
+                                    <input type="number" step="0.01" required value={editingProduct.price} onChange={e => setEditingProduct({...editingProduct, price: parseFloat(e.target.value)})} />
+                                </div>
+                                <div className="form-group-minimal">
+                                    <label>Stock Quantity</label>
+                                    <input type="number" required value={editingProduct.countInStock} onChange={e => setEditingProduct({...editingProduct, countInStock: parseInt(e.target.value, 10)})} />
+                                </div>
+                            </div>
+                            <div className="form-group-minimal">
+                                <label>Image URL</label>
+                                <input type="text" required value={editingProduct.image} onChange={e => setEditingProduct({...editingProduct, image: e.target.value})} />
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group-minimal">
+                                    <label>Brand</label>
+                                    <input type="text" required value={editingProduct.brand} onChange={e => setEditingProduct({...editingProduct, brand: e.target.value})} />
+                                </div>
+                                <div className="form-group-minimal">
+                                    <label>Category</label>
+                                    <input type="text" required value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct, category: e.target.value})} />
+                                </div>
+                            </div>
+                            <div className="form-group-minimal">
+                                <label>Description</label>
+                                <textarea required rows={4} value={editingProduct.description} onChange={e => setEditingProduct({...editingProduct, description: e.target.value})} />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '1.5rem' }}>
+                                <button type="button" onClick={() => setIsModalOpen(false)} className="btn btn-outline" style={{ padding: '0.6rem 1.25rem' }}>Cancel</button>
+                                <button type="submit" className="btn btn-primary" style={{ padding: '0.6rem 1.25rem' }}>Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
