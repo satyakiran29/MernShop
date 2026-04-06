@@ -1,6 +1,7 @@
 import Order from '../models/Order.js';
 import Stripe from 'stripe';
 import User from '../models/User.js';
+import Product from '../models/Product.js';
 import { sendOrderConfirmation, sendOrderDelivered } from '../utils/sendEmail.js';
 
 // @desc    Create new order
@@ -33,7 +34,7 @@ export const addOrderItems = async (req, res) => {
         });
 
         const createdOrder = await order.save();
-        
+
         // Fetch user data for email
         const user = await User.findById(req.user._id);
         if (user && user.email) {
@@ -94,8 +95,17 @@ export const getMyOrders = async (req, res) => {
 // @route   GET /api/orders
 // @access  Private/Admin
 export const getOrders = async (req, res) => {
-    const orders = await Order.find({}).populate('user', 'id name');
-    res.json(orders);
+    if (req.user.role === 'super_admin') {
+        const orders = await Order.find({}).populate('user', 'id name');
+        res.json(orders);
+    } else {
+        const adminProducts = await Product.find({ user: req.user._id }).select('_id');
+        const adminProductIds = adminProducts.map(p => p._id);
+        const orders = await Order.find({
+            'orderItems.product': { $in: adminProductIds }
+        }).populate('user', 'id name');
+        res.json(orders);
+    }
 };
 
 // @desc    Update order to delivered
@@ -137,7 +147,7 @@ export const createPaymentIntent = async (req, res) => {
 
     try {
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-        
+
         const paymentIntent = await stripe.paymentIntents.create({
             amount: totalAmount,
             currency: 'inr',

@@ -18,8 +18,9 @@ const Admin = () => {
     useEffect(() => {
         const fetchData = async () => {
             try {
+                // Fetch using isolated endpoints 
                 const [prodRes, orderRes] = await Promise.all([
-                    api.get('/products'),
+                    api.get('/products/admin'),
                     api.get('/orders')
                 ]);
                 setProducts(prodRes.data);
