@@ -12,7 +12,10 @@ const Register = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { register, user } = useAuth();
+    const [isOTPStep, setIsOTPStep] = useState(false);
+    const [otp, setOtp] = useState('');
+
+    const { register, verifyRegistration, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -35,10 +38,28 @@ const Register = () => {
 
         setLoading(true);
         try {
-            await register(name, email, password);
-            navigate(redirect);
+            const res = await register(name, email, password);
+            if (res && res.requiresOTP) {
+                setIsOTPStep(true);
+            } else {
+                navigate(redirect);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Something went wrong');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerifyRegistration = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+        try {
+            await verifyRegistration(email, otp);
+            navigate(redirect);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Invalid or expired OTP');
         } finally {
             setLoading(false);
         }
@@ -58,70 +79,94 @@ const Register = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column'}}>
-                    <div className="form-group">
-                        <label className="form-label">Full Name</label>
-                        <input 
-                            type="text" 
-                            placeholder="John Doe" 
-                            required
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            placeholder="email@example.com" 
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Password</label>
-                        <div className="form-input-wrapper">
+                {isOTPStep ? (
+                    <form onSubmit={handleVerifyRegistration} style={{display: 'flex', flexDirection: 'column'}}>
+                        <div className="form-group">
+                            <label className="form-label">Enter Email Verification Code</label>
                             <input 
-                                type={showPassword ? "text" : "password"} 
+                                type="text" 
+                                placeholder="123456" 
+                                maxLength={6}
+                                required
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
+                            />
+                            <p className="text-xs text-muted mt-2">We sent a 6-digit code to {email}.</p>
+                        </div>
+                        <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            {loading ? <Loader className="animate-spin" size={18} /> : 'Complete Registration'} 
+                            {!loading && <ArrowRight size={18} />}
+                        </button>
+                        <button type="button" onClick={() => setIsOTPStep(false)} className="text-xs text-muted hover:text-black mt-4 underline self-center">Back</button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column'}}>
+                        <div className="form-group">
+                            <label className="form-label">Full Name</label>
+                            <input 
+                                type="text" 
+                                placeholder="John Doe" 
+                                required
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Email Address</label>
+                            <input 
+                                type="email" 
+                                placeholder="email@example.com" 
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Password</label>
+                            <div className="form-input-wrapper">
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="••••••••" 
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-black"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Confirm Password</label>
+                            <input 
+                                type="password" 
                                 placeholder="••••••••" 
                                 required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
                             />
-                            <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-black"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
                         </div>
+
+                        <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            {loading ? <Loader className="animate-spin" size={18} /> : 'Create Account'} 
+                            {!loading && <ArrowRight size={18} />}
+                        </button>
+                    </form>
+                )}
+
+                {!isOTPStep && (
+                    <div className="auth-footer">
+                        <span className="text-muted">Already have an account? </span>
+                        <Link to={`/login${redirect !== '/' ? `?redirect=${redirect}` : ''}`} className="auth-link">Log in now</Link>
                     </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Confirm Password</label>
-                        <input 
-                            type="password" 
-                            placeholder="••••••••" 
-                            required
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                        />
-                    </div>
-
-                    <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        {loading ? <Loader className="animate-spin" size={18} /> : 'Create Account'} 
-                        {!loading && <ArrowRight size={18} />}
-                    </button>
-                </form>
-
-                <div className="auth-footer">
-                    <span className="text-muted">Already have an account? </span>
-                    <Link to={`/login${redirect !== '/' ? `?redirect=${redirect}` : ''}`} className="auth-link">Log in now</Link>
-                </div>
+                )}
             </div>
         </div>
     );

@@ -1,5 +1,7 @@
 import Order from '../models/Order.js';
 import Stripe from 'stripe';
+import User from '../models/User.js';
+import { sendOrderConfirmation, sendOrderDelivered } from '../utils/sendEmail.js';
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -31,6 +33,13 @@ export const addOrderItems = async (req, res) => {
         });
 
         const createdOrder = await order.save();
+        
+        // Fetch user data for email
+        const user = await User.findById(req.user._id);
+        if (user && user.email) {
+            await sendOrderConfirmation(user.email, createdOrder);
+        }
+
         res.status(201).json(createdOrder);
     }
 };
@@ -100,6 +109,12 @@ export const updateOrderToDelivered = async (req, res) => {
         order.deliveredAt = Date.now();
 
         const updatedOrder = await order.save();
+
+        const user = await User.findById(order.user);
+        if (user && user.email) {
+            await sendOrderDelivered(user.email, updatedOrder);
+        }
+
         res.json(updatedOrder);
     } else {
         res.status(404);

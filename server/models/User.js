@@ -17,13 +17,27 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
+        enum: ['user', 'seller', 'admin'],
         required: true,
-        default: 'user', // 'user', 'admin', 'super_admin'
+        default: 'user',
     },
     isActive: {
         type: Boolean,
         required: true,
         default: true,
+    },
+    otp: {
+        type: String,
+        required: false,
+    },
+    otpExpires: {
+        type: Date,
+        required: false,
+    },
+    is2FAEnabled: {
+        type: Boolean,
+        required: true,
+        default: false,
     }
 }, {
     timestamps: true,

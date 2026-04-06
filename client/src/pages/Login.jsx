@@ -10,7 +10,10 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { login, user } = useAuth();
+    const [is2FAStep, setIs2FAStep] = useState(false);
+    const [otp, setOtp] = useState('');
+
+    const { login, verify2FA, user } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -27,10 +30,28 @@ const Login = () => {
         setError('');
         setLoading(true);
         try {
-            await login(email, password);
-            navigate(redirect);
+            const res = await login(email, password);
+            if (res && res.requires2FA) {
+                setIs2FAStep(true);
+            } else {
+                navigate(redirect);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid email or password');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerify2FA = async (e) => {
+        e.preventDefault();
+        setError('');
+        setLoading(true);
+        try {
+            await verify2FA(email, otp);
+            navigate(redirect);
+        } catch (err) {
+            setError(err.response?.data?.message || 'Invalid or expired OTP');
         } finally {
             setLoading(false);
         }
@@ -50,49 +71,73 @@ const Login = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column'}}>
-                    <div className="form-group">
-                        <label className="form-label">Email Address</label>
-                        <input 
-                            type="email" 
-                            placeholder="email@example.com" 
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </div>
-
-                    <div className="form-group">
-                        <label className="form-label">Password</label>
-                        <div className="form-input-wrapper">
+                {is2FAStep ? (
+                    <form onSubmit={handleVerify2FA} style={{display: 'flex', flexDirection: 'column'}}>
+                        <div className="form-group">
+                            <label className="form-label">Enter OTP Validation Code</label>
                             <input 
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="••••••••" 
+                                type="text" 
+                                placeholder="123456" 
+                                maxLength={6}
                                 required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
+                                value={otp}
+                                onChange={(e) => setOtp(e.target.value)}
                             />
-                            <button 
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-black"
-                            >
-                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                            </button>
+                            <p className="text-xs text-muted mt-2">We sent a 6-digit code to your email.</p>
                         </div>
-                        <Link to="/forgot-password" size="sm" className="text-xs font-medium self-end hover:text-muted mt-1">Forgot password?</Link>
+                        <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            {loading ? <Loader className="animate-spin" size={18} /> : 'Verify Authentication'} 
+                            {!loading && <ArrowRight size={18} />}
+                        </button>
+                        <button type="button" onClick={() => setIs2FAStep(false)} className="text-xs text-muted hover:text-black mt-4 underline self-center">Back to Login</button>
+                    </form>
+                ) : (
+                    <form onSubmit={handleSubmit} style={{display: 'flex', flexDirection: 'column'}}>
+                        <div className="form-group">
+                            <label className="form-label">Email Address</label>
+                            <input 
+                                type="email" 
+                                placeholder="email@example.com" 
+                                required
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label">Password</label>
+                            <div className="form-input-wrapper">
+                                <input 
+                                    type={showPassword ? "text" : "password"} 
+                                    placeholder="••••••••" 
+                                    required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <button 
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-black"
+                                >
+                                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                </button>
+                            </div>
+                            <Link to="/forgot-password" size="sm" className="text-xs font-medium self-end hover:text-muted mt-1">Forgot password?</Link>
+                        </div>
+
+                        <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+                            {loading ? <Loader className="animate-spin" size={18} /> : 'Process Login'} 
+                            {!loading && <ArrowRight size={18} />}
+                        </button>
+                    </form>
+                )}
+
+                {!is2FAStep && (
+                    <div className="auth-footer">
+                        <span className="text-muted">Don't have an account? </span>
+                        <Link to={`/register${redirect !== '/' ? `?redirect=${redirect}` : ''}`} className="auth-link">Register now</Link>
                     </div>
-
-                    <button disabled={loading} className="btn btn-primary py-4 uppercase font-bold tracking-widest text-xs gap-2 mt-4" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-                        {loading ? <Loader className="animate-spin" size={18} /> : 'Process Login'} 
-                        {!loading && <ArrowRight size={18} />}
-                    </button>
-                </form>
-
-                <div className="auth-footer">
-                    <span className="text-muted">Don't have an account? </span>
-                    <Link to={`/register${redirect !== '/' ? `?redirect=${redirect}` : ''}`} className="auth-link">Register now</Link>
-                </div>
+                )}
             </div>
         </div>
     );
