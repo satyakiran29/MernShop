@@ -151,10 +151,7 @@ export const createPaymentIntent = async (req, res) => {
         const paymentIntent = await stripe.paymentIntents.create({
             amount: totalAmount,
             currency: 'inr',
-            // For UPI to show up, the Stripe account must be Indian and configured in the dashboard.
-            automatic_payment_methods: {
-                enabled: true,
-            },
+            payment_method_types: ['card', 'upi'],
         });
 
         res.json({
