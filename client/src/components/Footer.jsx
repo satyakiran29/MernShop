@@ -24,7 +24,9 @@ const Footer = () => {
             </div>
             <div className="footer-bottom">
                 <div className="footer-bottom-container">
-                    <span>© 2026 Mernshop. All rights reserved.</span>
+                    <span>
+                        © 2026 Mernshop. All rights reserved. | Developed by <a href="https://satyakiran.vercel.app/" target="_blank" rel="noopener noreferrer" className="navbar-link">Satyakiran</a>
+                    </span>
                     <div className="footer-socials">
                         <a href="#" className="navbar-link">Instagram</a>
                         <a href="#" className="navbar-link">Twitter</a>
