@@ -102,7 +102,7 @@ const fetchProducts = async () => {
 
 ## Who maintains and contributes
 
-**Maintainer:** [Satyakiran](https://github.com/satyakiran29) - *Lead Developer & Architect*
+**Maintainer:** Satyakiran - [Portfolio](https://satyakiran.vercel.app/) | [GitHub](https://github.com/satyakiran29) - *Lead Developer & Architect*
 
 We welcome contributions from the community! If you're interested in helping improve MernShop:
 
